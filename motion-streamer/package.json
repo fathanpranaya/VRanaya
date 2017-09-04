@@ -1,0 +1,9 @@
+{
+  "name": "socket-io-webvr",
+  "version": "0.1",
+  "description": "read sensor data from VR HMD then transfer to server via socket-io",
+  "dependencies": {
+    "express": "^4.15.2",
+    "socket.io": "^1.7.3"
+  }
+}

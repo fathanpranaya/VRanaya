@@ -1,0 +1,71 @@
+[0427/185918:ERROR:process_info.cc(608)] range at 0xd45b264e00000000, size 0x260 fully unreadable
+[0427/185918:ERROR:process_info.cc(608)] range at 0xd45b266e00000000, size 0x260 fully unreadable
+[0427/185918:ERROR:process_info.cc(608)] range at 0x0, size 0x260 fully unreadable
+[0427/185918:WARNING:in_range_cast.h(38)] value 2615047493628 out of range
+[0427/185918:WARNING:in_range_cast.h(38)] value 2615047493004 out of range
+[0427/185918:WARNING:in_range_cast.h(38)] value 2615047495462 out of range
+[0427/185918:WARNING:in_range_cast.h(38)] value 2615047492030 out of range
+[0427/191258:ERROR:process_info.cc(608)] range at 0xe82e264e00000000, size 0x261 fully unreadable
+[0427/191258:ERROR:process_info.cc(608)] range at 0xe82e266e00000000, size 0x261 fully unreadable
+[0427/191258:ERROR:process_info.cc(608)] range at 0x0, size 0x261 fully unreadable
+[0427/191258:WARNING:in_range_cast.h(38)] value 2619791246300 out of range
+[0427/191258:WARNING:in_range_cast.h(38)] value 2619791245676 out of range
+[0427/191258:WARNING:in_range_cast.h(38)] value 2619791248134 out of range
+[0427/191258:WARNING:in_range_cast.h(38)] value 2619791244702 out of range
+[0530/035858:ERROR:process_reader_win.cc(114)] NtOpenThread: {Access Denied} A process has requested access to an object, but has not been granted those access rights.  (0xc0000022)
+[0530/035858:ERROR:process_reader_win.cc(114)] NtOpenThread: {Access Denied} A process has requested access to an object, but has not been granted those access rights.  (0xc0000022)
+[0530/035858:ERROR:exception_snapshot_win.cc(87)] thread ID 2976 not found in process
+[0530/035858:ERROR:exception_snapshot_win.cc(87)] thread ID 11072 not found in process
+[0530/035858:WARNING:crash_report_exception_handler.cc(60)] ProcessSnapshotWin::Initialize failed
+[0530/035858:WARNING:crash_report_exception_handler.cc(60)] ProcessSnapshotWin::Initialize failed
+[0530/035858:ERROR:process_reader_win.cc(114)] NtOpenThread: {Access Denied} A process has requested access to an object, but has not been granted those access rights.  (0xc0000022)
+[0530/035858:ERROR:exception_snapshot_win.cc(87)] thread ID 9580 not found in process
+[0530/035858:WARNING:crash_report_exception_handler.cc(60)] ProcessSnapshotWin::Initialize failed
+[0530/035858:ERROR:process_reader_win.cc(114)] NtOpenThread: {Access Denied} A process has requested access to an object, but has not been granted those access rights.  (0xc0000022)
+[0530/035858:ERROR:exception_snapshot_win.cc(87)] thread ID 1620 not found in process
+[0530/035858:WARNING:crash_report_exception_handler.cc(60)] ProcessSnapshotWin::Initialize failed
+[0530/035858:ERROR:process_reader_win.cc(114)] NtOpenThread: {Access Denied} A process has requested access to an object, but has not been granted those access rights.  (0xc0000022)
+[0530/035858:ERROR:exception_snapshot_win.cc(87)] thread ID 6036 not found in process
+[0530/035858:WARNING:crash_report_exception_handler.cc(60)] ProcessSnapshotWin::Initialize failed
+[0530/035858:ERROR:process_reader_win.cc(114)] NtOpenThread: {Access Denied} A process has requested access to an object, but has not been granted those access rights.  (0xc0000022)
+[0530/035858:ERROR:exception_snapshot_win.cc(87)] thread ID 6456 not found in process
+[0530/035858:WARNING:crash_report_exception_handler.cc(60)] ProcessSnapshotWin::Initialize failed
+[0530/035858:ERROR:process_reader_win.cc(114)] NtOpenThread: {Access Denied} A process has requested access to an object, but has not been granted those access rights.  (0xc0000022)
+[0530/035858:ERROR:exception_snapshot_win.cc(87)] thread ID 1112 not found in process
+[0530/035858:WARNING:crash_report_exception_handler.cc(60)] ProcessSnapshotWin::Initialize failed
+[0530/035858:ERROR:process_reader_win.cc(114)] NtOpenThread: {Access Denied} A process has requested access to an object, but has not been granted those access rights.  (0xc0000022)
+[0530/035858:ERROR:exception_snapshot_win.cc(87)] thread ID 7908 not found in process
+[0530/035858:WARNING:crash_report_exception_handler.cc(60)] ProcessSnapshotWin::Initialize failed
+[0530/035858:ERROR:process_reader_win.cc(114)] NtOpenThread: {Access Denied} A process has requested access to an object, but has not been granted those access rights.  (0xc0000022)
+[0530/035858:ERROR:exception_snapshot_win.cc(87)] thread ID 8808 not found in process
+[0530/035858:WARNING:crash_report_exception_handler.cc(60)] ProcessSnapshotWin::Initialize failed
+[0530/035858:ERROR:process_reader_win.cc(114)] NtOpenThread: {Access Denied} A process has requested access to an object, but has not been granted those access rights.  (0xc0000022)
+[0530/035858:ERROR:exception_snapshot_win.cc(87)] thread ID 13944 not found in process
+[0530/035858:WARNING:crash_report_exception_handler.cc(60)] ProcessSnapshotWin::Initialize failed
+[0530/035858:ERROR:process_reader_win.cc(114)] NtOpenThread: {Access Denied} A process has requested access to an object, but has not been granted those access rights.  (0xc0000022)
+[0530/035858:ERROR:exception_snapshot_win.cc(87)] thread ID 12896 not found in process
+[0530/035858:WARNING:crash_report_exception_handler.cc(60)] ProcessSnapshotWin::Initialize failed
+[0530/035858:ERROR:process_reader_win.cc(114)] NtOpenThread: {Access Denied} A process has requested access to an object, but has not been granted those access rights.  (0xc0000022)
+[0530/035858:ERROR:exception_snapshot_win.cc(87)] thread ID 3344 not found in process
+[0530/035858:WARNING:crash_report_exception_handler.cc(60)] ProcessSnapshotWin::Initialize failed
+[0614/172147:ERROR:process_info.cc(608)] range at 0x271f535c00000000, size 0x253 fully unreadable
+[0614/172147:ERROR:process_info.cc(608)] range at 0x271f537c00000000, size 0x253 fully unreadable
+[0614/172147:ERROR:process_info.cc(608)] range at 0x0, size 0x253 fully unreadable
+[0614/172147:WARNING:in_range_cast.h(38)] value 2556366136694 out of range
+[0614/172147:WARNING:in_range_cast.h(38)] value 2556366135998 out of range
+[0614/172147:WARNING:in_range_cast.h(38)] value 2556366138732 out of range
+[0614/172147:WARNING:in_range_cast.h(38)] value 2556366135182 out of range
+[0614/172308:ERROR:process_info.cc(608)] range at 0x9e16535a00000000, size 0x270 fully unreadable
+[0614/172308:ERROR:process_info.cc(608)] range at 0x9e16537a00000000, size 0x270 fully unreadable
+[0614/172308:ERROR:process_info.cc(608)] range at 0x0, size 0x270 fully unreadable
+[0614/172308:WARNING:in_range_cast.h(38)] value 2682794171622 out of range
+[0614/172308:WARNING:in_range_cast.h(38)] value 2682794170926 out of range
+[0614/172308:WARNING:in_range_cast.h(38)] value 2682794173660 out of range
+[0614/172308:WARNING:in_range_cast.h(38)] value 2682794170110 out of range
+[0614/172500:ERROR:process_info.cc(608)] range at 0x4a69535a00000000, size 0x1b8 fully unreadable
+[0614/172500:ERROR:process_info.cc(608)] range at 0x4a69537a00000000, size 0x1b8 fully unreadable
+[0614/172500:ERROR:process_info.cc(608)] range at 0x0, size 0x1b8 fully unreadable
+[0614/172500:WARNING:in_range_cast.h(38)] value 1891102808646 out of range
+[0614/172500:WARNING:in_range_cast.h(38)] value 1891102807950 out of range
+[0614/172500:WARNING:in_range_cast.h(38)] value 1891102810684 out of range
+[0614/172500:WARNING:in_range_cast.h(38)] value 1891102807134 out of range
