@@ -5,6 +5,14 @@ var io = require('socket.io')(http);
 var path = require('path');
 var fs = require('fs');
 
+// Add Zeromq to communicate with C++
+var zmq = require('zeromq');
+var sock = zmq.socket('pub');
+var zmq_addr = '127.0.0.1';
+var zmq_port = 5556;
+sock.bindSync('tcp://'+zmq_addr+':'+zmq_port);
+console.log('[ZEROMQ] Publisher bound to port: '+zmq_port);
+
 
 var rateControl = 10;
 var buffer = 0;
@@ -59,19 +67,23 @@ app.get('/roll', function (req, res) {
 });
 
 io.on('connection', function(socket) {
-	console.log('a user connected');
+	console.log('[SOCKETIO] computer connected');
 	socket.on('disconnect', function() {
-		console.log('a user disconnected');
+		console.log('[SOCKETIO] computer disconnected');
 	});
 	socket.on('vr_data', function(msg) {
 		var motion_data = new Float32Array(msg.motion_data);
-		writeLog("CLIENT: "+msg.timestamp+" - "+motion_data+"\n");
+		var orientation = new Float32Array(msg.orientation);
+		// writeLog("CLIENT: "+msg.timestamp+" - "+motion_data+"\n");
+		var leftViewMatrix = motion_data.slice(16*0,16*1);
+		console.log(leftViewMatrix);
 		socket.broadcast.emit('vr_data', msg);
+		sock.send(msg.timestamp);
 		// io.emit('vr_data', msg);
 	});
 	socket.on('vr_data_server', function(msg) {
 		var motion_data = new Float32Array(msg.motion_data);
-		writeLog("SERVER: "+msg.timestamp+" - "+motion_data+"\n");
+		// writeLog("SERVER: "+msg.timestamp+" - "+motion_data+"\n");
 		socket.broadcast.emit('vr_data_server', msg);
 	});
 });

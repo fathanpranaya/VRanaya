@@ -163,6 +163,7 @@ found in the LICENSE file.
        
         gl.viewport(0,0,webglCanvas.width,webglCanvas.height);
         cubeSea.render(projectionMat, leftViewMatrix, stats, t);
+        console.log(leftViewMatrix);
 
         // send back motion data to client 
         if (serverMsg != null)

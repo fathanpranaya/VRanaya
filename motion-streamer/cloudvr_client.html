@@ -154,9 +154,11 @@ found in the LICENSE file.
           motion_data.set(frameData.leftProjectionMatrix, length*2);
           motion_data.set(frameData.rightProjectionMatrix, length*3);
 
+          console.log(frameData.pose.orientation);
           var msg = {
             timestamp: frameData.timestamp,
-            motion_data: motion_data.buffer
+            motion_data: motion_data.buffer,
+            orientation: frameData.pose.orientation.buffer
           };
 
           // send data to server using socket.io
