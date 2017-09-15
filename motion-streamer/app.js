@@ -1,3 +1,4 @@
+// HTTP and SocketIO 
 var express = require('express');
 var app = express();
 var http = require('http').Server(app);
@@ -13,19 +14,19 @@ var zmq_port = 5556;
 sock.bindSync('tcp://'+zmq_addr+':'+zmq_port);
 console.log('[ZEROMQ] Publisher bound to port: '+zmq_port);
 
-
+// Log to file
 var rateControl = 10;
 var buffer = 0;
 var file_name = new Date().getTime() / 1000;
-
-function writeLog(msg) {
-	fs.appendFile(__dirname+"/"+file_name+".log", msg, function(err) {
-	    if(err) {
-	        return console.log(err);
-	    }
-
-	    // console.log("The file was saved!");
-	});
+var log_enabled = true;
+function writeLog(msg, type) {
+	if (log_enabled) {
+		fs.appendFile(__dirname+"/"+file_name+"_"+type+".csv", msg, function(err) {
+		    if(err) {
+		        return console.log(err);
+		    }
+		});
+	}
 }
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -74,16 +75,14 @@ io.on('connection', function(socket) {
 	socket.on('vr_data', function(msg) {
 		var motion_data = new Float32Array(msg.motion_data);
 		var orientation = new Float32Array(msg.orientation);
-		// writeLog("CLIENT: "+msg.timestamp+" - "+motion_data+"\n");
-		var leftViewMatrix = motion_data.slice(16*0,16*1);
-		console.log(leftViewMatrix);
+		// writeLog(msg.timestamp+","+motion_data+"\n", "client");
+		writeLog(msg.timestamp+"\n", "client");
 		socket.broadcast.emit('vr_data', msg);
-		sock.send(msg.timestamp);
 		// io.emit('vr_data', msg);
 	});
 	socket.on('vr_data_server', function(msg) {
 		var motion_data = new Float32Array(msg.motion_data);
-		// writeLog("SERVER: "+msg.timestamp+" - "+motion_data+"\n");
+		writeLog(msg.timestamp+","+motion_data+"\n", "server");
 		socket.broadcast.emit('vr_data_server', msg);
 	});
 });
