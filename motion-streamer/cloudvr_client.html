@@ -215,12 +215,6 @@ found in the LICENSE file.
       })();
 
       socket.on('vr_data_server', function (msg) {  
-        // var serverMsg = msg;
-        // var motion_data = new Float32Array(msg.motion_data);
-        // leftViewMatrix = motion_data.slice(16*0,16*1);
-        // rightViewMatrix = motion_data.slice(16*1,16*2);
-        // leftProjectionMatrix = motion_data.slice(16*2,16*3);
-        // rightProjectionMatrix = motion_data.slice(16*3,16*4);
         var timestamp = msg.timestamp;
         var orientation = new Float32Array(msg.orientation);
         var now = new Date().getTime(); 
