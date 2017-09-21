@@ -4,6 +4,7 @@
   "description": "read sensor data from VR HMD then transfer to server via socket-io",
   "dependencies": {
     "express": "^4.15.2",
-    "socket.io": "^1.7.3"
+    "socket.io": "^1.7.3",
+    "zeromq": "^4.6.0"
   }
 }

@@ -134,6 +134,7 @@ jsmpeg.prototype.receiveSocketMessage = function( event ) {
 		this.currentPacketLength = 
 			(messageData[4] << 24) + (messageData[5] << 16) +
 			(messageData[6] << 8) + messageData[7];
+		console.log(this.currentPacketLength);
 	}
 	
 	if( this.currentPacketType == START_PACKET_VIDEO ) {
