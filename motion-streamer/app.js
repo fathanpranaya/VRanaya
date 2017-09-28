@@ -74,10 +74,12 @@ io.on('connection', function(socket_io) {
 	});
 	socket_io.on('vr_data', function(msg) {
 		var motion_data = new Float32Array(msg.motion_data);
-		var orientation = new Float32Array(msg.orientation);
-		writeLog(msg.timestamp+","+motion_data+"\n", "client");
-		socket_io.broadcast.emit('vr_data', msg);
-		zmq_sock.send(msg);
+		// var orientation = new Float32Array(msg.orientation);
+		writeLog(msg.timestamp+msg.orientation+","+motion_data+"\n", "client");
+		// socket_io.broadcast.emit('vr_data', msg);
+		// test offline
+		var dummy_msg = ",1505989085647.636,-0.08498956263065338,-0.7713844776153564,0.0481448620557785,0.6288281679153442,";
+		zmq_sock.send(dummy_msg);
 	});
 	// socket_io.on('vr_data_server', function(msg) {
 	// 	var motion_data = new Float32Array(msg.motion_data);
@@ -85,3 +87,8 @@ io.on('connection', function(socket_io) {
 	// 	socket_io.broadcast.emit('vr_data_server', msg);
 	// });
 });
+
+while (1) {
+	var dummy_msg = ",1505989085647.636,-0.08498956263065338,-0.7713844776153564,0.0481448620557785,0.6288281679153442,";
+	zmq_sock.send(dummy_msg);
+}

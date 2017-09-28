@@ -154,10 +154,12 @@ found in the LICENSE file.
           motion_data.set(frameData.leftProjectionMatrix, length*2);
           motion_data.set(frameData.rightProjectionMatrix, length*3);
 
+          var orientation = ","+frameData.pose.orientation[0]+","+frameData.pose.orientation[1]+","+frameData.pose.orientation[2]+","+frameData.pose.orientation[3];
+
           var msg = {
             timestamp: frameData.timestamp,
             motion_data: motion_data.buffer,
-            orientation: frameData.pose.orientation.buffer
+            orientation: orientation
           };
 
           // send data to server using socket.io
@@ -214,12 +216,12 @@ found in the LICENSE file.
       }
       })();
 
-      socket.on('vr_data_server', function (msg) {  
-        var timestamp = msg.timestamp;
-        var orientation = new Float32Array(msg.orientation);
-        var now = new Date().getTime(); 
-        console.log(now+","+msg.timestamp+","+msg.orientation+"\n");
-      });
+      // socket.on('vr_data_server', function (msg) {  
+      //   var timestamp = msg.timestamp;
+      //   var orientation = new Float32Array(msg.orientation);
+      //   var now = new Date().getTime(); 
+      //   console.log(now+","+msg.timestamp+","+msg.orientation+"\n");
+      // });
     </script>
   </body>
 </html>

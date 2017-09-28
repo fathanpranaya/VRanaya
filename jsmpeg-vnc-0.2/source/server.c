@@ -44,6 +44,10 @@ server_t *server_create(int port, size_t buffer_size) {
 	self->send_buffer_with_padding = (unsigned char *)malloc(full_buffer_size);
 	self->send_buffer = &self->send_buffer_with_padding[LWS_SEND_BUFFER_PRE_PADDING];
 
+	// WNL: buffer initialization for zeromq msg
+	self->zmq_send_buffer_with_padding = (unsigned char *)malloc(full_buffer_size);
+	self->zmq_send_buffer = &self->zmq_send_buffer_with_padding[LWS_SEND_BUFFER_PRE_PADDING];
+
 	self->port = port;
 	self->clients = NULL;
 
@@ -73,6 +77,8 @@ void server_destroy(server_t *self) {
 	}
 	
 	free(self->send_buffer_with_padding);
+	// WNL: free zeromq buffer 
+	free(self->zmq_send_buffer_with_padding);
 	free(self);
 }
 
@@ -127,9 +133,12 @@ void server_broadcast(server_t *self, void *data, size_t size, void *zeromq_data
 		return;
 	}
 	memcpy(self->send_buffer, data, size);
+	// WNL: copy zeromq buffer
+	memcpy(self->zmq_send_buffer, zeromq_data, zeromq_size);
 
 	client_foreach(self->clients, client) {
 		libwebsocket_write(client->socket, self->send_buffer, size, (libwebsocket_write_protocol)type);
+		libwebsocket_write(client->socket, self->zmq_send_buffer, zeromq_size, (libwebsocket_write_protocol)type);
 	}
 	libwebsocket_callback_on_writable_all_protocol(&(server_protocols[1]));
 }

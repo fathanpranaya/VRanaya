@@ -22,6 +22,10 @@ typedef struct server_t {
 	size_t buffer_size;
 	unsigned char *send_buffer_with_padding;
 	unsigned char *send_buffer;
+	// WNL: attribute for zeromq msg buffer
+	unsigned char *zmq_send_buffer_with_padding;
+	unsigned char *zmq_send_buffer;
+	// END
 	void *user;
 	
 	int port;
