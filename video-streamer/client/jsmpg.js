@@ -128,17 +128,19 @@ jsmpeg.prototype.receiveSocketMessage = function( event ) {
 	if(
 		messageData.length >= 8 && messageData[0] === 0x00 &&
 		messageData[1] === 0x00 && messageData[2] === 0x01 &&
-		(messageData[3] === START_PACKET_VIDEO || messageData[3] === START_PACKET_AUDIO)
+		(messageData[3] === START_PACKET_VIDEO || messageData[3] === START_PACKET_AUDIO || messageData[3] === START_PACKET_MOTION)
 	) {
 		this.currentPacketType = messageData[3];
 		this.currentPacketLength = 
 			(messageData[4] << 24) + (messageData[5] << 16) +
 			(messageData[6] << 8) + messageData[7];
+		//console.log(this.currentPacketLength);
 	}
 	
 	if( this.currentPacketType == START_PACKET_VIDEO ) {
 		this.buffer.bytes.set(messageData, this.buffer.writePos);
 		this.buffer.writePos += messageData.length;
+		//console.log("this is video data");
 
 		if( this.buffer.writePos >= this.currentPacketLength ) {
 			if( this.findStartCode(START_PICTURE) == BitReader.NOT_FOUND ) { return; } 
@@ -150,6 +152,13 @@ jsmpeg.prototype.receiveSocketMessage = function( event ) {
 
 	else if( this.currentPacketType == START_PACKET_AUDIO ) {
 
+	}
+
+	else if( this.currentPacketType == START_PACKET_MOTION ) {
+		//console.log("this is motion data :)");
+		var string = new TextDecoder("utf-8").decode(messageData);
+		string = string.split(',');
+		console.log(string);
 	}
 };
 
@@ -2356,6 +2365,7 @@ var
 	START_USER_DATA = 0xB2,
 	START_PACKET_VIDEO = 0xFA,
 	START_PACKET_AUDIO = 0xFB,
+	START_PACKET_MOTION = 0xFC,
 
 	// Shaders for accelerated WebGL YCbCrToRGBA conversion
 	SHADER_FRAGMENT_YCBCRTORGBA = [

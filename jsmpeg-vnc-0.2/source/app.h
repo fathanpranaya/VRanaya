@@ -10,6 +10,8 @@
 
 #define APP_MOUSE_SPEED 5.0f
 #define APP_FRAME_BUFFER_SIZE (1024*1024)
+// WNL: motion data buffer size
+#define APP_MOTION_BUFFER_SIZE (1*105)
 
 typedef struct {
 	encoder_t *encoder;

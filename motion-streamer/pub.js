@@ -8,6 +8,7 @@ sock.bindSync('tcp://'+addr+':'+port);
 console.log('Publisher bound to port: '+port);
 
 setInterval(function () {
-	console.log('sending message');
-	sock.send(['fathan adi pranaya']);
+	var msg = new Date().getTime() / 1000;
+	console.log('[Publisher] sending message: '+msg);
+	sock.send(msg);
 }, 500);

@@ -22,6 +22,10 @@ typedef struct server_t {
 	size_t buffer_size;
 	unsigned char *send_buffer_with_padding;
 	unsigned char *send_buffer;
+	// WNL: attribute for zeromq msg buffer
+	unsigned char *zmq_send_buffer_with_padding;
+	unsigned char *zmq_send_buffer;
+	// END
 	void *user;
 	
 	int port;
@@ -40,6 +44,8 @@ char *server_get_host_address(server_t *self);
 char *server_get_client_address(server_t *self, libwebsocket *wsi);
 void server_update(server_t *self);
 void server_send(server_t *self, libwebsocket *socket, void *data, size_t size, server_data_type_t type);
-void server_broadcast(server_t *self, void *data, size_t size, server_data_type_t type);
+//void server_broadcast(server_t *self, void *data, void *motion_data, size_t size, server_data_type_t type);
+// WNL: add parameter to server_broadcast function
+void server_broadcast(server_t *self, void *data, size_t size, void *zeromq_data, size_t zeromq_size, server_data_type_t type);
 
 #endif
