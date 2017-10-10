@@ -1,13 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "app.h"
 #include "timer.h"
-
+#include "zmq.h"
 
 typedef enum {
 	jsmpeg_frame_type_video = 0xFA010000,
-	jsmpeg_frame_type_audio = 0xFB010000
+	jsmpeg_frame_type_audio = 0xFB010000,
+	// WNL: add type for motion data
+	jsmpeg_frame_type_motion = 0xFC010000
 } jsmpeg_trame_type_t;
 
 typedef struct {
@@ -214,11 +217,30 @@ void app_run(app_t *self, int target_fps) {
 	frame->type = jsmpeg_frame_type_video;
 	frame->size = 0;
 
+	jsmpeg_frame_t *motion = (jsmpeg_frame_t *)malloc(APP_MOTION_BUFFER_SIZE);
+	motion->type = jsmpeg_frame_type_motion;
+	motion->size = 0;
+
 	double
 		fps = 60.0f,
 		wait_time = (1000.0f/target_fps) - 1.5f;
 
 	timer_t *frame_timer = timer_create();
+
+	// WNL: zeromq initialization
+	void 
+		*zeromq_context = zmq_ctx_new(),
+		*zeromq_subscriber = zmq_socket(zeromq_context, ZMQ_SUB);
+	int zeromq_rc = zmq_connect(zeromq_subscriber, "tcp://localhost:5556");
+	assert (zeromq_rc == 0);
+
+	zeromq_rc = zmq_setsockopt (zeromq_subscriber, ZMQ_SUBSCRIBE, 0, 0);
+    assert (zeromq_rc == 0);
+
+    char zeromq_buffer[128];
+	int  nbytes;		
+	int  timestamp, data;
+	// END
 
 	while( true ) {
 		double delta = timer_delta(frame_timer);
@@ -226,20 +248,35 @@ void app_run(app_t *self, int target_fps) {
 			fps = fps * 0.95f + 50.0f/delta;
 			timer_reset(frame_timer);
 
+			// WNL: grab screen
 			void *pixels;
 			double grab_time = timer_measure(grab_time) {
 				pixels = grabber_grab(self->grabber);
 			}
 
+			// WNL: recv data from zeromq publisher
+			nbytes = zmq_recv(zeromq_subscriber, motion->data, 128, ZMQ_DONTWAIT);
+        
+			if (nbytes > 0)
+			{
+				//printf("[zeromq] %d bytes - ", nbytes);
+				//zeromq_buffer[nbytes] = '\0';
+				//printf("Received: %s\n", zeromq_buffer); // for debugging only
+				//sscanf (zeromq_buffer, "%d %d", &timestamp, &data); 
+				printf("Received: %s\n", motion->data); // for debugging only
+			}
+
+			// WNL: TODO: encode motion data (buffer & image)
 			double encode_time = timer_measure(encode_time) {
 				size_t encoded_size = APP_FRAME_BUFFER_SIZE - sizeof(jsmpeg_frame_t);
+				size_t motion_size = APP_MOTION_BUFFER_SIZE;
 				encoder_encode(self->encoder, pixels, frame->data, &encoded_size);
 				
 				if( encoded_size ) {
 					frame->size = swap_int32(sizeof(jsmpeg_frame_t) + encoded_size);
-					server_broadcast(self->server, frame, sizeof(jsmpeg_frame_t) + encoded_size, server_type_binary);
+					server_broadcast(self->server, frame, sizeof(jsmpeg_frame_t) + encoded_size, motion, motion_size, server_type_binary);
 				}
-			}
+			}			
 			
 			printf("fps:%3d (grabbing:%6.2fms, scaling/encoding:%6.2fms)\r", (int)fps, grab_time, encode_time);
 		}
