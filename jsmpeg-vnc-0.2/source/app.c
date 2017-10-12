@@ -254,17 +254,20 @@ void app_run(app_t *self, int target_fps) {
 				pixels = grabber_grab(self->grabber);
 			}
 
-			// WNL: recv data from zeromq publisher
-			nbytes = zmq_recv(zeromq_subscriber, motion->data, 128, ZMQ_DONTWAIT);
-        
-			if (nbytes > 0)
-			{
-				//printf("[zeromq] %d bytes - ", nbytes);
-				//zeromq_buffer[nbytes] = '\0';
-				//printf("Received: %s\n", zeromq_buffer); // for debugging only
-				//sscanf (zeromq_buffer, "%d %d", &timestamp, &data); 
-				printf("Received: %s\n", motion->data); // for debugging only
-			}
+			// WNL: recv data from zeromq publisher			
+			int n_msg = 0;
+			do {
+				nbytes = zmq_recv(zeromq_subscriber, motion->data, 128, ZMQ_DONTWAIT);
+				if (nbytes > 0)
+				{
+					n_msg++;
+					//printf("[zeromq] %d bytes - ", nbytes);
+					//zeromq_buffer[nbytes] = '\0';
+					//printf("Received: %s\n", zeromq_buffer); // for debugging only
+					//sscanf (zeromq_buffer, "%d %d", &timestamp, &data); 
+					//printf("Received: %s\n", motion->data); // for debugging only
+				}
+			} while (nbytes > 0);
 
 			// WNL: TODO: encode motion data (buffer & image)
 			double encode_time = timer_measure(encode_time) {

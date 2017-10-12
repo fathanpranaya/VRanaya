@@ -155,10 +155,15 @@ jsmpeg.prototype.receiveSocketMessage = function( event ) {
 	}
 
 	else if( this.currentPacketType == START_PACKET_MOTION ) {
-		//console.log("this is motion data :)");
 		var string = new TextDecoder("utf-8").decode(messageData);
 		string = string.split(',');
-		console.log(string);
+		
+		// OLD MOTION DATA FROM SERVER
+		this.old_orientation_timestamp = string[1];
+		this.old_orientation_x = string[2];
+		this.old_orientation_y = string[3];
+		this.old_orientation_z = string[4];
+		this.old_orientation_w = string[5];
 	}
 };
 
@@ -886,6 +891,13 @@ jsmpeg.prototype.renderFrameGL = function() {
 	// Get Motion Data
 	if (vrDisplay) {
 		vrDisplay.getFrameData(frameData);
+		if (this.old_orientation_timestamp) {
+			console.log("Time: "+frameData.timestamp+" "+this.old_orientation_timestamp);
+			console.log("x: "+frameData.pose.orientation[0]+" "+this.old_orientation_x);
+			console.log("y: "+frameData.pose.orientation[1]+" "+this.old_orientation_y);
+			console.log("z: "+frameData.pose.orientation[2]+" "+this.old_orientation_z);
+			console.log("w: "+frameData.pose.orientation[3]+" "+this.old_orientation_w);
+		}
 	}
 
 	gl.activeTexture(gl.TEXTURE0);
