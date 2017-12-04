@@ -268,7 +268,7 @@ void app_run(app_t *self, int target_fps) {
 					//printf("Received: %s\n", motion->data); // for debugging only
 				}
 			} while (nbytes > 0);
-
+			
 			// WNL: TODO: encode motion data (buffer & image)
 			double encode_time = timer_measure(encode_time) {
 				size_t encoded_size = APP_FRAME_BUFFER_SIZE - sizeof(jsmpeg_frame_t);

@@ -43,6 +43,10 @@ app.get('/cloudvr_server', function (req, res) {
 	res.sendFile(__dirname+'/cloudvr_server.html');
 });
 
+app.get('/load_data', function (req, res) {
+	res.sendFile(__dirname+'/data.csv');
+});
+
 app.get('/dot', function (req, res) {
 	res.sendFile(__dirname+'/dot.html');
 });

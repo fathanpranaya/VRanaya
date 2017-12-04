@@ -16,8 +16,19 @@
 var log = 0;
 // FATHAN VARIABLE
 var frameData = null;
+
+var euler_x_t = 0;
+var euler_y_t = 0;
+var euler_z_t = 0;
+
+var euler_x_o = 0;
+var euler_y_o = 0;
+var euler_z_o = 0;
+
 var vrDisplay = null;
 // var socket = io();
+
+var rotational_timewarp_on = true;
 
 // 
 // webVR Initialization
@@ -118,6 +129,13 @@ jsmpeg.prototype.decodeSocketHeader = function( data ) {
 jsmpeg.prototype.currentPacketType = 0;
 jsmpeg.prototype.currentPacketLength = 0;
 jsmpeg.prototype.receiveSocketMessage = function( event ) {
+	var timeStampInMs = window.performance 
+		&& window.performance.now 
+		&& window.performance.timing 
+		&& window.performance.timing.navigationStart ? window.performance.now() + window.performance.timing.navigationStart : Date.now();
+
+	// console.log(timeStampInMs);
+
 	var messageData = new Uint8Array(event.data);
 
 	if( !this.sequenceStarted ) {
@@ -154,6 +172,7 @@ jsmpeg.prototype.receiveSocketMessage = function( event ) {
 
 	}
 
+	// WNL
 	else if( this.currentPacketType == START_PACKET_MOTION ) {
 		var string = new TextDecoder("utf-8").decode(messageData);
 		string = string.split(',');
@@ -455,6 +474,7 @@ jsmpeg.prototype.now = function() {
 }
 
 jsmpeg.prototype.nextFrame = function() {
+	// console.log('nextFrame');
 	if( !this.buffer ) { return; }
 
 	var frameStart = this.now();
@@ -504,12 +524,15 @@ jsmpeg.prototype.scheduleNextFrame = function() {
 			this.benchDecodeTimes = 0;
 			if( window.console ) { console.log("Average time per frame:", this.benchAvgFrameTime, 'ms'); }
 		}
+		// console.log("onTime");
 		setTimeout( this.nextFrame.bind(this), 0);
 	}
 	else if( wait < 18) {
 		this.scheduleAnimation();
+		// console.log("scheduleAnimation");
 	}
 	else {
+		// console.log("onLate");
 		setTimeout( this.scheduleAnimation.bind(this), wait );
 	}
 };
@@ -838,7 +861,13 @@ jsmpeg.prototype.initWebGL = function() {
 
 	// The main YCbCrToRGBA Shader
 	this.program = gl.createProgram();
-	gl.attachShader(this.program, this.compileShader(gl.VERTEX_SHADER, SHADER_VERTEX_IDENTITY));
+	
+	if (rotational_timewarp_on) {
+		gl.attachShader(this.program, this.compileShader(gl.VERTEX_SHADER, SHADER_VERTEX_IDENTITY_TW));
+	} else {
+		gl.attachShader(this.program, this.compileShader(gl.VERTEX_SHADER, SHADER_VERTEX_IDENTITY));
+	}
+
 	gl.attachShader(this.program, this.compileShader(gl.FRAGMENT_SHADER, SHADER_FRAGMENT_YCBCRTORGBA));
 	gl.linkProgram(this.program);
 	
@@ -879,6 +908,148 @@ jsmpeg.prototype.initWebGL = function() {
 	return true;
 };
 
+jsmpeg.prototype.getAngleError = function () {
+	// input: old and new quaternion
+	// output: shifted pixel for x and y axis
+
+	// old motion data
+	var x = this.old_orientation_x;
+	var y = this.old_orientation_y;
+	var z = this.old_orientation_z;
+	var w = this.old_orientation_w;
+	var heading_o, attitude_o, bank_o = 0;
+
+	// old motion data conversion
+	var test = x*y + z*w;
+    if (test > 0.499) { // singularity at north pole
+        heading_o = 2 * Math.atan2(x,w);
+        attitude_o = Math.PI/2;
+        bank_o = 0;
+    }
+    if (test < -0.499) { // singularity at south pole
+        heading_o = -2 * Math.atan2(x,w);
+        attitude_o = - Math.PI/2;
+        bank_o = 0;
+    }
+    if(isNaN(heading_o)){
+        var sqx = x*x;
+        var sqy = y*y;
+        var sqz = z*z;
+        heading_o = Math.atan2(2*y*w - 2*x*z , 1 - 2*sqy - 2*sqz); // Heading
+        attitude_o = Math.asin(2*test); // attitude_o
+        bank_o = Math.atan2(2*x*w - 2*y*z , 1 - 2*sqx - 2*sqz); // bank_o
+    }
+
+	// new motion data
+	var x = frameData.pose.orientation[0];
+	var y = frameData.pose.orientation[1];
+	var z = frameData.pose.orientation[2];
+	var w = frameData.pose.orientation[3];
+	var heading_t, attitude_t, bank_t = 0;
+	
+	// new motion data conversion
+	var test = x*y + z*w;
+    if (test > 0.499) { // singularity at north pole
+        heading_t = 2 * Math.atan2(x,w);
+        attitude_t = Math.PI/2;
+        bank_t = 0;
+    }
+    if (test < -0.499) { // singularity at south pole
+        heading_t = -2 * Math.atan2(x,w);
+        attitude_t = - Math.PI/2;
+        bank_t = 0;
+    }
+    if(isNaN(heading_t)){
+        var sqx = x*x;
+        var sqy = y*y;
+        var sqz = z*z;
+        heading_t = Math.atan2(2*y*w - 2*x*z , 1 - 2*sqy - 2*sqz); // Heading
+        attitude_t = Math.asin(2*test); // attitude_t
+        bank_t = Math.atan2(2*x*w - 2*y*z , 1 - 2*sqx - 2*sqz); // bank_t
+    }
+
+    // Calculate error
+    var thresh = 3.14159;
+    this.err_x = (Math.abs(heading_t - heading_o) > thresh) ? 360 - Math.abs(heading_t - heading_o) : Math.abs(heading_t - heading_o);
+    this.err_y = (Math.abs(bank_t - bank_o) > thresh) ? 360 - Math.abs(bank_t - bank_o) : Math.abs(bank_t - bank_o);
+    this.err_z = (Math.abs(attitude_t - attitude_o) > thresh) ? 360 - Math.abs(attitude_t - attitude_o) : Math.abs(attitude_t - attitude_o);
+
+    this.err_x = ((heading_t - heading_o) >= 0) ? this.err_x : -this.err_x;
+    this.err_y = ((bank_t - bank_o) >= 0) ? this.err_y : -this.err_y;
+    this.err_z = ((attitude_t - attitude_o) >= 0) ? this.err_z : -this.err_z;
+
+    // euler_y = heading;
+    // euler_z = attitude;
+    // euler_x = bank;
+    return 1;
+}
+    
+
+jsmpeg.prototype.getError = function () { 
+    // Calculate shifted pixels
+    
+    // const
+    var ox = 0.032; // m
+    var oy = 0.06;  // m
+    var oz = 0.07;  // m
+    var in_to_m = 0.0254;
+    var monitor_size = 23.8 // inch
+    var ratio_y = 9;
+    var ratio_x = 16
+    this.vr_height = monitor_size * Math.sin(Math.atan(9/16)) * in_to_m; // m
+    this.vr_width = monitor_size * Math.cos(Math.atan(9/16)) * in_to_m // m
+
+    var shifted_x = Math.round(Number(this.width/this.vr_width * Math.sqrt(ox*ox+oz*oz) * this.err_x));
+    var shifted_y = Math.round(Number(this.height/this.vr_height * Math.sqrt(oy*oy+oz*oz) * this.err_y));
+
+    var ret = [shifted_x, shifted_y];
+    // console.log(ret);
+    return ret;
+
+}
+
+jsmpeg.prototype.poseToMatrix = function(pose) {
+	var out = new Float32Array(16);
+
+    // If the orientation or position are null, provide defaults.
+    var q = pose ? pose : [0, 0, 0, 1];
+    var v = [0, 0, 0];
+
+    // Compute some values for the quaternion math.
+    var x2 = q[0] + q[0];
+    var y2 = q[1] + q[1];
+    var z2 = q[2] + q[2];
+
+    var xx = q[0] * x2;
+    var xy = q[0] * y2;
+    var xz = q[0] * z2;
+    var yy = q[1] * y2;
+    var yz = q[1] * z2;
+    var zz = q[2] * z2;
+    var wx = q[3] * x2;
+    var wy = q[3] * y2;
+    var wz = q[3] * z2;
+
+    out[0] = 1 - (yy + zz);
+    out[1] = xy + wz;
+    out[2] = xz - wy;
+    out[3] = 0;
+    out[4] = xy - wz;
+    out[5] = 1 - (xx + zz);
+    out[6] = yz + wx;
+    out[7] = 0;
+    out[8] = xz + wy;
+    out[9] = yz - wx;
+    out[10] = 1 - (xx + yy);
+    out[11] = 0;
+    out[12] = v[0];
+    out[13] = v[1];
+    out[14] = v[2];
+    out[15] = 1;
+
+    return out;
+}
+
 jsmpeg.prototype.renderFrameGL = function() {
 	var gl = this.gl;
 
@@ -891,14 +1062,16 @@ jsmpeg.prototype.renderFrameGL = function() {
 	// Get Motion Data
 	if (vrDisplay) {
 		vrDisplay.getFrameData(frameData);
-		if (this.old_orientation_timestamp) {
-			console.log("Time: "+frameData.timestamp+" "+this.old_orientation_timestamp);
-			console.log("x: "+frameData.pose.orientation[0]+" "+this.old_orientation_x);
-			console.log("y: "+frameData.pose.orientation[1]+" "+this.old_orientation_y);
-			console.log("z: "+frameData.pose.orientation[2]+" "+this.old_orientation_z);
-			console.log("w: "+frameData.pose.orientation[3]+" "+this.old_orientation_w);
-		}
+			// console.log(this.old_orientation_timestamp);
+			// if (this.old_orientation_timestamp) {
+			// 	console.log("Time: "+frameData.timestamp+" "+this.old_orientation_timestamp);
+			// 	console.log("x: "+frameData.pose.orientation[0]+" "+this.old_orientation_x);
+			// 	console.log("y: "+frameData.pose.orientation[1]+" "+this.old_orientation_y);
+			// 	console.log("z: "+frameData.pose.orientation[2]+" "+this.old_orientation_z);
+			// 	console.log("w: "+frameData.pose.orientation[3]+" "+this.old_orientation_w);
+			// }
 	}
+
 
 	gl.activeTexture(gl.TEXTURE0);
 	gl.bindTexture(gl.TEXTURE_2D, this.YTexture);
@@ -912,19 +1085,76 @@ jsmpeg.prototype.renderFrameGL = function() {
 	gl.bindTexture(gl.TEXTURE_2D, this.CBTexture);
 	gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, this.halfWidth, this.height/2, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, uint8Cb);
 
-	gl.uniformMatrix4fv(this.matViewUniformLocation, gl.FALSE, frameData.leftViewMatrix);
-	var leftProj = frameData.leftProjectionMatrix;
-	leftProj = m4.translate(leftProj, 0, 0, -0.5);
-	gl.uniformMatrix4fv(this.matProjUniformLocation, gl.FALSE, leftProj);
+	// FIRST version Timewarping x-y shifting
+	rotational_timewarp_on = false;
 	this.gl.viewport(0, 0, this.width/2, this.height);
 	gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-	
-	gl.uniformMatrix4fv(this.matViewUniformLocation, gl.FALSE, frameData.rightViewMatrix);
-	var rightProj = frameData.rightProjectionMatrix;
-	rightProj = m4.translate(rightProj, 0, 0, -0.5);
-	gl.uniformMatrix4fv(this.matProjUniformLocation, gl.FALSE, rightProj);
 	this.gl.viewport(this.width/2, 0, this.width/2, this.height);
 	gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+	// FIRST version Timewarping x-y shifting
+	// this.getAngleError();
+	// var shifted = this.getError();
+
+	// rotational_timewarp_on = false;
+	// this.gl.viewport(shifted[0], -shifted[1], this.width/2, this.height);
+	// gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+	// this.gl.viewport(this.width/2 + shifted[0], -shifted[1], this.width/2, this.height);
+	// gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+	
+
+	//  SECOND version Timewarping normal rotation
+	// var shifted_matrix = this.poseToMatrix(new Float32Array([
+	// 	this.old_orientation_x-frameData.pose.orientation[0],
+	// 	this.old_orientation_y-frameData.pose.orientation[1],
+	// 	this.old_orientation_z-frameData.pose.orientation[2],
+	// 	this.old_orientation_w-frameData.pose.orientation[3]
+	// ]));
+
+	// gl.uniformMatrix4fv(this.matViewUniformLocation, gl.FALSE, frameData.leftViewMatrix);
+	// var leftProj = frameData.leftProjectionMatrix;
+	// leftProj = m4.translate(leftProj, 0, 0, -0.5);
+	// gl.uniformMatrix4fv(this.matProjUniformLocation, gl.FALSE, leftProj);
+	
+	// gl.uniformMatrix4fv(this.matViewUniformLocation, gl.FALSE, shifted_matrix);
+	// this.gl.viewport(0, 0, this.width/2, this.height);
+	// gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+	
+	// var rightProj = frameData.rightProjectionMatrix;
+	// rightProj = m4.translate(rightProj, 0, 0, -0.5);
+	// gl.uniformMatrix4fv(this.matProjUniformLocation, gl.FALSE, rightProj);
+	// gl.uniformMatrix4fv(this.matViewUniformLocation, gl.FALSE, shifted_matrix);
+	// this.gl.viewport(this.width/2, 0, this.width/2, this.height);
+	// gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+	// THIRD version Timewarping enhanced rotation
+	// Calculate x-y-z error axis (new motion data - old motion data)
+
+	// Rotate x-y-z axis
+	// this.getAngleError();
+	// // console.log(frameData.leftViewMatrix);
+	// var leftViewMatrix = frameData.leftViewMatrix;
+	// var rightViewMatrix = frameData.rightViewMatrix;
+	
+	// leftViewMatrix = mat4.identity(this.identityMatrix)
+	// rightViewMatrix = mat4.identity(this.identityMatrix)
+
+	// mat4.rotateX(leftViewMatrix, leftViewMatrix, this.err_x); 
+	// mat4.rotateY(leftViewMatrix, leftViewMatrix, this.err_y); 
+	// mat4.rotateZ(leftViewMatrix, leftViewMatrix, this.err_z);
+
+	// mat4.rotateX(rightViewMatrix, rightViewMatrix, this.err_x); 
+	// mat4.rotateY(rightViewMatrix, rightViewMatrix, this.err_y); 
+	// mat4.rotateZ(rightViewMatrix, rightViewMatrix, this.err_z); 
+
+
+	// gl.uniformMatrix4fv(this.matViewUniformLocation, gl.FALSE, leftViewMatrix);
+	// this.gl.viewport(0, 0, this.width/2, this.height);
+	// gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+	// gl.uniformMatrix4fv(this.matViewUniformLocation, gl.FALSE, rightViewMatrix);
+	// this.gl.viewport(this.width/2, 0, this.width/2, this.height);
+	// gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 };
 
 // socket.on('vr_data_server', function (msg) {
@@ -2413,6 +2643,8 @@ var
 		'}'
 	].join('\n'),
 	
+
+	// WNL: image rotation
 	SHADER_VERTEX_IDENTITY = [
 		'attribute vec2 vertex;',
 		'varying vec2 texCoord;',
@@ -2421,8 +2653,30 @@ var
 		
 		'void main() {',
 			'texCoord = vertex;',
-			'gl_Position = mProj * mView * vec4((vertex * 2.0 - 1.0) * vec2(1, -1), 0.0, 1.0);',
+			// WNL: Rotation 2nd version
 			// 'gl_Position = mView * vec4((vertex * 2.0 - 1.0) * vec2(1, -1), 0.0, 1.0);',
+			// 'gl_Position = mProj * mView * vec4((vertex * 2.0 - 1.0) * vec2(1, -1), 0.0, 1.0);',
+			
+			// WNL: Rotation 1st version
+			'gl_Position = vec4((vertex * 2.0 - 1.0) * vec2(1, -1), 0.0, 1.0);',
+		'}'
+	].join('\n'),
+
+	// WNL: image rotation
+	SHADER_VERTEX_IDENTITY_TW = [
+		'attribute vec2 vertex;',
+		'varying vec2 texCoord;',
+		'uniform mat4 mView;',
+		'uniform mat4 mProj;',
+		
+		'void main() {',
+			'texCoord = vertex;',
+			// WNL: Rotation 2nd version
+			'gl_Position = mView * vec4((vertex * 2.0 - 1.0) * vec2(1, -1), 0.0, 1.0);',
+			// 'gl_Position = mProj * mView * vec4((vertex * 2.0 - 1.0) * vec2(1, -1), 0.0, 1.0);',
+			
+			// WNL: Rotation 1st version
+			// 'gl_Position = vec4((vertex * 2.0 - 1.0) * vec2(1, -1), 0.0, 1.0);',
 		'}'
 	].join('\n');
 	

@@ -34,6 +34,9 @@ found in the LICENSE file.
           <button id="stream" type="button" class="btn btn-block btn-success">
             Stream
           </button> 
+          <button id="load_and_stream" type="button" class="btn btn-block btn-primary">
+            Load and Stream
+          </button> 
           <button id="stop" type="button" class="btn btn-block btn-warning" style="display:none">
             Stop
           </button>
@@ -53,6 +56,9 @@ found in the LICENSE file.
       var frameData = null;
       var vrDisplay = null;
       var prev_time = 0;
+
+      var allTextLines = null;
+      var motion_index = 0;
  
       // webVR Initialization
       if (navigator.getVRDisplays) {
@@ -112,6 +118,80 @@ found in the LICENSE file.
         return;
       }
 
+      function quatToMatrix (pose) {
+        var out = new Float32Array(16);
+
+          // If the orientation or position are null, provide defaults.
+          var q = pose ? pose : [0, 0, 0, 1];
+          var v = [0, 0, 0];
+
+          // Compute some values for the quaternion math.
+          var x2 = q[0] + q[0];
+          var y2 = q[1] + q[1];
+          var z2 = q[2] + q[2];
+
+          var xx = q[0] * x2;
+          var xy = q[0] * y2;
+          var xz = q[0] * z2;
+          var yy = q[1] * y2;
+          var yz = q[1] * z2;
+          var zz = q[2] * z2;
+          var wx = q[3] * x2;
+          var wy = q[3] * y2;
+          var wz = q[3] * z2;
+
+          out[0] = 1 - (yy + zz);
+          out[1] = xy + wz;
+          out[2] = xz - wy;
+          out[3] = 0;
+          out[4] = xy - wz;
+          out[5] = 1 - (xx + zz);
+          out[6] = yz + wx;
+          out[7] = 0;
+          out[8] = xz + wy;
+          out[9] = yz - wx;
+          out[10] = 1 - (xx + yy);
+          out[11] = 0;
+          out[12] = v[0];
+          out[13] = v[1];
+          out[14] = v[2];
+          out[15] = 1;
+
+          return out;
+      }
+
+      function streamData() {
+        var el = allTextLines[motion_index].split(',');
+        console.log(el);
+
+        var orientation = ","+el[1]+","+el[2]+","+el[3]+","+el[0];
+        var quat_pose = [el[1], el[2], el[3], el[0]]; 
+
+        // convert quaternion to view matrix
+        var viewMatrix = quatToMatrix(quat_pose);
+        console.log(viewMatrix);
+
+        // Matrix
+        var length = 16;
+        var motion_data = new Float32Array(64);
+        motion_data.set(viewMatrix);
+        motion_data.set(viewMatrix, length*1);
+        motion_data.set(viewMatrix, length*2);
+        motion_data.set(viewMatrix, length*3);
+
+        var msg = {
+          timestamp: el[4],
+          motion_data: motion_data.buffer,
+          orientation: orientation
+        };
+
+        // send data to server using socket.io
+        socket.emit('vr_data', msg);
+        // console.log('sent');
+        motion_index++;
+        window.requestAnimationFrame(streamData);
+      }
+
       $(document).ready(function () {
         $('#stream').click(function () {
           $(this).hide();
@@ -120,13 +200,24 @@ found in the LICENSE file.
           setTimeout(loop, 1);
         });
 
+        $('#load_and_stream').click(function () {
+          $(this).attr("disabled", "disabled");
+          $.ajax({
+            type: "GET",
+            url: "http://192.168.1.61:3000/load_data",
+            dataType: "text",
+            success: function(data) {
+              allTextLines = data.split(/\r\n|\n/);
+              window.requestAnimationFrame(streamData);
+            }
+          });
+        });
+
         $('#stop').click(function () {
           $(this).hide();
           $('#stream').show();
           is_streaming = false;
         });
-
-
       });
 
     </script>
