@@ -89,6 +89,7 @@ found in the LICENSE file.
       var rightViewMatrix = mat4.create();
       var leftProjectionMatrix = mat4.create();
       var rightProjectionMatrix = mat4.create();
+      var shifted = [0,0];
       var timestamp = 0;
       var socket = io();
       var video_counter = 0;
@@ -141,7 +142,7 @@ found in the LICENSE file.
         // The viewport and projection matrix will change frequently when we
         // begin rendering in stereo, but for now they only need to be updated
         // when the window is resized.
-        gl.viewport(0, 0, webglCanvas.width, webglCanvas.height);
+        gl.viewport(shifted[0],-shifted[1], webglCanvas.width, webglCanvas.height);
         mat4.perspective(projectionMat, Math.PI*0.4, webglCanvas.width/webglCanvas.height, 0.1, 1024.0);
       }
       window.addEventListener("resize", onResize, false);
@@ -162,12 +163,12 @@ found in the LICENSE file.
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
        
-        gl.viewport(0,0,webglCanvas.width,webglCanvas.height);
+        gl.viewport(shifted[0],-shifted[1],webglCanvas.width,webglCanvas.height);
         cubeSea.render(projectionMat, leftViewMatrix, stats, t);
 
         // send back motion data to client 
-        if (serverMsg != null)
-          socket.emit('vr_data_server', serverMsg);
+        // if (serverMsg != null)
+        //   socket.emit('vr_data_server', serverMsg);
 
 
         // gl.viewport(0,0,webglCanvas.width*0.5,webglCanvas.height);
@@ -184,12 +185,14 @@ found in the LICENSE file.
       
       socket.on('vr_data', function (msg) {  
         serverMsg = msg;
+        var shifted_msg = new Float32Array(msg.shifted);
+        shifted = shifted_msg.slice(0,2);
+
         var motion_data = new Float32Array(msg.motion_data);
         leftViewMatrix = motion_data.slice(16*0,16*1);
         rightViewMatrix = motion_data.slice(16*1,16*2);
         leftProjectionMatrix = motion_data.slice(16*2,16*3);
         rightProjectionMatrix = motion_data.slice(16*3,16*4);
-        timestamp = msg.timestamp;
         video_counter++;
         console.log(video_counter);
       });

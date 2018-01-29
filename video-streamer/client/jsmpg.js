@@ -1087,10 +1087,10 @@ jsmpeg.prototype.renderFrameGL = function() {
 
 	// FIRST version Timewarping x-y shifting
 	rotational_timewarp_on = false;
-	this.gl.viewport(0, 0, this.width/2, this.height);
+	this.gl.viewport(0, 0, this.width, this.height);
 	gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-	this.gl.viewport(this.width/2, 0, this.width/2, this.height);
-	gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+	// this.gl.viewport(this.width/2, 0, this.width/2, this.height);
+	// gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
 	// FIRST version Timewarping x-y shifting
 	// this.getAngleError();

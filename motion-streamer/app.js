@@ -12,7 +12,7 @@ var zmq_sock = zmq.socket('pub');
 var zmq_addr = '127.0.0.1';
 var zmq_port = 5556;
 zmq_sock.bindSync('tcp://'+zmq_addr+':'+zmq_port);
-console.log('[ZEROMQ] Publisher bound to port: '+zmq_port);
+	console.log('[ZEROMQ]\t Publisher bound to port: '+zmq_port);
 
 // Log to file
 var rateControl = 10;
@@ -32,53 +32,39 @@ function writeLog(msg, type) {
 app.use(express.static(path.join(__dirname, 'public')));
 
 http.listen(3000, function () {
-	console.log('listening on *:3000');
+	console.log('[HTTP]\t\t listening on *:3000');
 });
 
-app.get('/cloudvr_client', function (req, res) {
-	res.sendFile(__dirname+'/cloudvr_client.html');
-});
-
+// VISUALIZER - NO TW
 app.get('/cloudvr_server', function (req, res) {
 	res.sendFile(__dirname+'/cloudvr_server.html');
 });
+app.get('/cloudvr_client', function (req, res) {
+	res.sendFile(__dirname+'/cloudvr_client.html');
+});
+// END
+
+// VISUALIZE - TW
+app.get('/cloudvr_client_tw', function (req, res) {
+	res.sendFile(__dirname+'/cloudvr_client_tw.html');
+});
+app.get('/cloudvr_server_tw', function (req, res) {
+	res.sendFile(__dirname+'/cloudvr_server_tw.html');
+});
+// END
 
 app.get('/load_data', function (req, res) {
-	res.sendFile(__dirname+'/data.csv');
-});
-
-app.get('/dot', function (req, res) {
-	res.sendFile(__dirname+'/dot.html');
-});
-
-app.get('/threejs', function (req, res) {
-	res.sendFile(__dirname+'/threejs.html');
-});
-
-app.get('/webgl', function (req, res) {
-	res.sendFile(__dirname+'/2.html');
-});
-
-app.get('/yaw', function (req, res) {
-	res.sendFile(__dirname+'/yaw.html');
-});
-
-app.get('/pitch', function (req, res) {
-	res.sendFile(__dirname+'/pitch.html');
-});
-
-app.get('/roll', function (req, res) {
-	res.sendFile(__dirname+'/roll.html');
+	console.log(req.query.file);
+	res.sendFile(__dirname+'/Traces/500/'+req.query.file);
 });
 
 io.on('connection', function(socket_io) {
-	console.log('[SOCKETIO] computer connected');
+	console.log('[SOCKETIO]\t computer connected: '+socket_io.request.connection.remoteAddress);
 	socket_io.on('disconnect', function() {
-		console.log('[SOCKETIO] computer disconnected');
+		console.log('[SOCKETIO]\t computer disconnected: '+socket_io.request.connection.remoteAddress);
 	});
 	socket_io.on('vr_data', function(msg) {
 		var motion_data = new Float32Array(msg.motion_data);
-		// var orientation = new Float32Array(msg.orientation);
 		writeLog(msg.timestamp+msg.orientation+","+motion_data+"\n", "client");
 		socket_io.broadcast.emit('vr_data', msg);
 		zmq_sock.send(","+msg.timestamp+msg.orientation+",");
@@ -86,14 +72,4 @@ io.on('connection', function(socket_io) {
 		//var dummy_msg = ",1505989085647.636,-0.08498956263065338,-0.7713844776153564,0.0481448620557785,0.6288281679153442,";
 		//zmq_sock.send(dummy_msg);
 	});
-	// socket_io.on('vr_data_server', function(msg) {
-	// 	var motion_data = new Float32Array(msg.motion_data);
-	// 	writeLog(msg.timestamp+","+motion_data+"\n", "server");
-	// 	socket_io.broadcast.emit('vr_data_server', msg);
-	// });
 });
-
-// while (1) {
-// 	var dummy_msg = ",1505989085647.636,-0.08498956263065338,-0.7713844776153564,0.0481448620557785,0.6288281679153442,";
-// 	zmq_sock.send(dummy_msg);
-// }

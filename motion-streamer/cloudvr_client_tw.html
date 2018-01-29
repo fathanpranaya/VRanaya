@@ -43,23 +43,23 @@ found in the LICENSE file.
       <hr>  
       <div class="row">
         <div class="well">
-          <h2>Load Trace File: </h2>
+          <h2>Load Trace File: (Timewarp Case) </h2>
             <p>Motion data to be loaded and streamed to VR apps</p>
             <form>
               <div class="radio">
-                <label><input type="radio" value="TRUTH.csv" name="optradio" checked>Truth</label>
+                <label><input type="radio" value="TRUTH_TW.csv" name="optradio" checked>Truth</label>
               </div>
               <div class="radio">
-                <label><input type="radio" value="NOP.csv" name="optradio">No Prediction</label>
+                <label><input type="radio" value="NOP_TW.csv" name="optradio">No Prediction</label>
               </div>
               <div class="radio">
-                <label><input type="radio" value="CRP.csv" name="optradio">CRP</label>
+                <label><input type="radio" value="CRP_TW.csv" name="optradio">CRP</label>
               </div>
               <div class="radio">
-                <label><input type="radio" value="CAP.csv" name="optradio">CAP</label>
+                <label><input type="radio" value="CAP_TW.csv" name="optradio">CAP</label>
               </div>
               <div class="radio">
-                <label><input type="radio" value="ANN.csv" name="optradio">ANN</label>
+                <label><input type="radio" value="ANN_TW.csv" name="optradio">ANN</label>
               </div>
             </form>
             <button id="load_and_stream" type="button" class="btn btn-block btn-primary">
@@ -147,6 +147,42 @@ found in the LICENSE file.
         return;
       }
 
+      function getAngleError(euler_o, euler_t) {
+        // input: old and new euler
+        // output: shifted pixel for x and y axis
+
+        // Calculate error
+        var thresh = 3.14159;
+        var err_x = (Math.abs(euler_t[1] - euler_o[1]) > thresh) ? 360 - Math.abs(euler_t[1] - euler_o[1]) : Math.abs(euler_t[1] - euler_o[1]);
+        var err_y = (Math.abs(euler_t[0] - euler_o[0]) > thresh) ? 360 - Math.abs(euler_t[0] - euler_o[0]) : Math.abs(euler_t[0] - euler_o[0]);
+        var err_z = (Math.abs(euler_t[2] - euler_o[2]) > thresh) ? 360 - Math.abs(euler_t[2] - euler_o[2]) : Math.abs(euler_t[2] - euler_o[2]);
+
+        err_x = ((euler_t[0] - euler_o[0]) >= 0) ? err_x : -err_x;
+        err_y = ((euler_t[1] - euler_o[1]) >= 0) ? err_y : -err_y;
+        err_z = ((euler_t[2] - euler_o[2]) >= 0) ? err_z : -err_z;
+
+        // euler_y = heading;
+        // euler_z = attitude;
+        // euler_x = bank;
+
+        // const
+        var ox = 0.032; // m
+        var oy = 0.06;  // m
+        var oz = 0.07;  // m
+        var in_to_m = 0.0254;
+        var monitor_size = 23.8 // inch
+        var ratio_y = 9;
+        var ratio_x = 16
+        var vr_height = monitor_size * Math.sin(Math.atan(9/16)) * in_to_m; // m
+        var vr_width = monitor_size * Math.cos(Math.atan(9/16)) * in_to_m // m
+
+        var shifted_x = Math.round(Number(window.innerWidth/vr_width * Math.sqrt(ox*ox+oz*oz) * err_x));
+        var shifted_y = Math.round(Number(window.innerHeight/vr_height * Math.sqrt(oy*oy+oz*oz) * err_y));
+
+        var ret = [shifted_x, shifted_y];
+        return ret;
+      }
+
       function quatToMatrix (pose) {
         var out = new Float32Array(16);
 
@@ -216,12 +252,20 @@ found in the LICENSE file.
             if (from_euler) {
               var euler = allTextLines[motion_index].split(',');
               var el = fromEuler(euler[1], euler[0]+90, euler[2]);
+              var el_t = fromEuler(euler[4], euler[3]+90, euler[5]);
             } else {
               var el = allTextLines[motion_index].split(',');
             }
 
-            var orientation = ","+el[1]+","+el[2]+","+el[3]+","+el[0];
+
             var quat_pose = [el[1], el[2], el[3], el[0]]; 
+            var quat_pose_t = [el_t[1], el_t[2], el_t[3], el_t[0]]; 
+
+            //Time-warping
+            var shifted = new Float32Array(2);
+            var shifted_pixels = getAngleError(el, el_t);
+            shifted.set(shifted_pixels);
+            // console.log(shifted);
 
             // convert quaternion to view matrix
             var viewMatrix = quatToMatrix(quat_pose);
@@ -236,9 +280,8 @@ found in the LICENSE file.
             motion_data.set(viewMatrix, length*3);
 
             var msg = {
-              timestamp: el[4],
               motion_data: motion_data.buffer,
-              orientation: orientation
+              shifted: shifted.buffer
             };
 
             // send data to server using socket.io
