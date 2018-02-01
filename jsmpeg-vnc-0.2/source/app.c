@@ -237,7 +237,7 @@ void app_run(app_t *self, int target_fps) {
 	zeromq_rc = zmq_setsockopt (zeromq_subscriber, ZMQ_SUBSCRIBE, 0, 0);
     assert (zeromq_rc == 0);
 
-    char zeromq_buffer[128];
+    char zeromq_buffer[256];
 	int  nbytes;		
 	int  timestamp, data;
 	// END
@@ -257,7 +257,7 @@ void app_run(app_t *self, int target_fps) {
 			// WNL: recv data from zeromq publisher			
 			int n_msg = 0;
 			do {
-				nbytes = zmq_recv(zeromq_subscriber, motion->data, 128, ZMQ_DONTWAIT);
+				nbytes = zmq_recv(zeromq_subscriber, motion->data, 256, ZMQ_DONTWAIT);
 				if (nbytes > 0)
 				{
 					n_msg++;

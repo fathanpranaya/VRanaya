@@ -237,10 +237,10 @@ found in the LICENSE file.
         var cz = Math.cos(z);
 
         var out = [];
-        out[0] = sx * cy * cz - cx * sy * sz;
-        out[1] = cx * sy * cz + sx * cy * sz;
-        out[2] = cx * cy * sz - sx * sy * cz;
-        out[3] = cx * cy * cz + sx * sy * sz;
+        out[0] = sx * cy * cz - cx * sy * sz; //Q-w
+        out[1] = cx * sy * cz + sx * cy * sz; //Q-x
+        out[2] = cx * cy * sz - sx * sy * cz; //Q-y
+        out[3] = cx * cy * cz + sx * sy * sz; //Q-z
         return out;
       }
 
@@ -276,9 +276,15 @@ found in the LICENSE file.
             motion_data.set(viewMatrix, length*2);
             motion_data.set(viewMatrix, length*3);
 
+            // Orientation - passed to JSMPEG
+            var orientation = ","+
+              quat_pose[0]+","+quat_pose[1]+","+quat_pose[2]+","+quat_pose[3]+","+
+              quat_pose_t[0]+","+quat_pose_t[1]+","+quat_pose_t[2]+","+quat_pose_t[3]+",";
+
             var msg = {
               motion_data: motion_data.buffer,
-              shifted: shifted.buffer
+              shifted: shifted.buffer,
+              orientation: orientation
             };
 
             // send data to server using socket.io

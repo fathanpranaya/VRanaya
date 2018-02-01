@@ -183,6 +183,16 @@ jsmpeg.prototype.receiveSocketMessage = function( event ) {
 		this.old_orientation_y = string[3];
 		this.old_orientation_z = string[4];
 		this.old_orientation_w = string[5];
+		
+		this.new_orientation_x = string[6];
+		this.new_orientation_y = string[7];
+		this.new_orientation_z = string[8];
+		this.new_orientation_w = string[9];
+
+		if ((string[2] !== 'NaN') && (typeof string[2] !== 'undefined'))  {
+			console.log(string);
+		}
+
 	}
 };
 
@@ -940,12 +950,19 @@ jsmpeg.prototype.getAngleError = function () {
         bank_o = Math.atan2(2*x*w - 2*y*z , 1 - 2*sqx - 2*sqz); // bank_o
     }
 
-	// new motion data
-	var x = frameData.pose.orientation[0];
-	var y = frameData.pose.orientation[1];
-	var z = frameData.pose.orientation[2];
-	var w = frameData.pose.orientation[3];
-	var heading_t, attitude_t, bank_t = 0;
+	// new motion data - FOR DIRECT INPUT
+	// var x = frameData.pose.orientation[0];
+	// var y = frameData.pose.orientation[1];
+	// var z = frameData.pose.orientation[2];
+	// var w = frameData.pose.orientation[3];
+	// var heading_t, attitude_t, bank_t = 0;
+
+	// new motion data - FOR LOADED INPUT
+	var x = this.new_orientation_x;
+	var y = this.new_orientation_y;
+	var z = this.new_orientation_z;
+	var w = this.new_orientation_w;
+	var heading_o, attitude_o, bank_o = 0;
 	
 	// new motion data conversion
 	var test = x*y + z*w;
@@ -1104,6 +1121,8 @@ jsmpeg.prototype.renderFrameGL = function() {
 	
 
 	//  SECOND version Timewarping normal rotation
+
+	// DIRECT INPUT
 	// var shifted_matrix = this.poseToMatrix(new Float32Array([
 	// 	this.old_orientation_x-frameData.pose.orientation[0],
 	// 	this.old_orientation_y-frameData.pose.orientation[1],
@@ -1111,14 +1130,21 @@ jsmpeg.prototype.renderFrameGL = function() {
 	// 	this.old_orientation_w-frameData.pose.orientation[3]
 	// ]));
 
+	// LOADED INPUT
+	var shifted_matrix = this.poseToMatrix(new Float32Array([
+		this.old_orientation_x-this.new_orientation_x,
+		this.old_orientation_y-this.new_orientation_y,
+		this.old_orientation_z-this.new_orientation_z,
+		this.old_orientation_w-this.new_orientation_w
+	]));
+
 	// gl.uniformMatrix4fv(this.matViewUniformLocation, gl.FALSE, frameData.leftViewMatrix);
 	// var leftProj = frameData.leftProjectionMatrix;
 	// leftProj = m4.translate(leftProj, 0, 0, -0.5);
 	// gl.uniformMatrix4fv(this.matProjUniformLocation, gl.FALSE, leftProj);
-	
-	// gl.uniformMatrix4fv(this.matViewUniformLocation, gl.FALSE, shifted_matrix);
-	// this.gl.viewport(0, 0, this.width/2, this.height);
-	// gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+	gl.uniformMatrix4fv(this.matViewUniformLocation, gl.FALSE, shifted_matrix);
+	this.gl.viewport(0, 0, this.width, this.height);
+	gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 	
 	// var rightProj = frameData.rightProjectionMatrix;
 	// rightProj = m4.translate(rightProj, 0, 0, -0.5);
@@ -2644,7 +2670,7 @@ var
 	].join('\n'),
 	
 
-	// WNL: image rotation
+	// WNL: image translation
 	SHADER_VERTEX_IDENTITY = [
 		'attribute vec2 vertex;',
 		'varying vec2 texCoord;',
@@ -2673,10 +2699,7 @@ var
 			'texCoord = vertex;',
 			// WNL: Rotation 2nd version
 			'gl_Position = mView * vec4((vertex * 2.0 - 1.0) * vec2(1, -1), 0.0, 1.0);',
-			// 'gl_Position = mProj * mView * vec4((vertex * 2.0 - 1.0) * vec2(1, -1), 0.0, 1.0);',
-			
-			// WNL: Rotation 1st version
-			// 'gl_Position = vec4((vertex * 2.0 - 1.0) * vec2(1, -1), 0.0, 1.0);',
+			// 'gl_Position = mProj * mView * vec4((vertex * 2.0 - 1.0) * vec2(1, -1), 0.0, 1.0);',			
 		'}'
 	].join('\n');
 	

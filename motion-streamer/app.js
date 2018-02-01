@@ -65,7 +65,7 @@ io.on('connection', function(socket_io) {
 	});
 	socket_io.on('vr_data', function(msg) {
 		var motion_data = new Float32Array(msg.motion_data);
-		writeLog(msg.timestamp+msg.orientation+","+motion_data+"\n", "client");
+		writeLog(msg.timestamp+msg.motion_data+","+motion_data+"\n", "client");
 		socket_io.broadcast.emit('vr_data', msg);
 		console.log(msg.orientation);
 		zmq_sock.send(","+msg.timestamp+msg.orientation+",");
