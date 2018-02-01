@@ -165,6 +165,11 @@ found in the LICENSE file.
         gl.viewport(0,0,webglCanvas.width,webglCanvas.height);
         cubeSea.render(projectionMat, leftViewMatrix, stats, t);
 
+        // send back motion data to client 
+        if (serverMsg != null)
+          socket.emit('vr_data_server', serverMsg);
+
+
         // gl.viewport(0,0,webglCanvas.width*0.5,webglCanvas.height);
         // cubeSea.render(leftProjectionMatrix, leftViewMatrix, stats, t);
        

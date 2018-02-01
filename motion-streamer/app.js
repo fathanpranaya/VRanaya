@@ -53,6 +53,15 @@ app.get('/cloudvr_server_tw', function (req, res) {
 });
 // END
 
+// Direct Input
+app.get('/cloudvr_client_direct', function (req, res) {
+	res.sendFile(__dirname+'/cloudvr_client_direct.html');
+});
+app.get('/cloudvr_server_direct', function (req, res) {
+	res.sendFile(__dirname+'/cloudvr_server_direct.html');
+});
+// END
+
 app.get('/load_data', function (req, res) {
 	console.log(req.query.file);
 	res.sendFile(__dirname+'/Traces/500/'+req.query.file);

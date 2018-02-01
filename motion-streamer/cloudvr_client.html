@@ -15,33 +15,6 @@ found in the LICENSE file.
     <!--Chrome origin trial header-->
     <div class="container-fluid">
       <div class="row">
-        <div class="col-md-12">
-          <h3 class="text-center">
-            VRanaya - Control Panel
-          </h3>
-          <div class="panel panel-primary">
-            <div class="panel-heading">
-              <h3 class="panel-title">
-                Motion Data
-              </h3>
-            </div>
-            <div id="orientation" class="panel-body">
-              "press stream"
-            </div>
-            <div id="timestamp" class="panel-footer">
-              Time: -
-            </div>
-          </div> 
-          <button id="stream" type="button" class="btn btn-block btn-success">
-            Stream
-          </button> 
-          <button id="stop" type="button" class="btn btn-block btn-warning" style="display:none">
-            Stop
-          </button>
-        </div>
-      </div>
-      <hr>  
-      <div class="row">
         <div class="well">
           <h2>Load Trace File: </h2>
             <p>Motion data to be loaded and streamed to VR apps</p>
@@ -78,8 +51,6 @@ found in the LICENSE file.
     <script>
       // create socket.io
       var socket = io();
-
-      var is_streaming = false;
       var msg = null;
       var frameData = null;
       var vrDisplay = null;
@@ -88,64 +59,6 @@ found in the LICENSE file.
       var allTextLines = null;
       var motion_index = 0;
       var from_euler = true;
- 
-      // webVR Initialization
-      if (navigator.getVRDisplays) {
-        frameData = new VRFrameData();
-        navigator.getVRDisplays().then(function (displays) {
-          if (displays.length > 0) {
-            vrDisplay = displays[displays.length - 1];
-          } else {
-            console.log("WebVR supported, but no VRDisplays found.", 3000);
-          }
-        });
-      } else if (navigator.getVRDevices) {
-        console.log("Your browser supports WebVR but not the latest version. See <a href='http://webvr.info'>webvr.info</a> for more info.");
-      } else {
-        console.log("Your browser does not support WebVR. See <a href='http://webvr.info'>webvr.info</a> for assistance.");
-      }
-
-      // Main Loop
-      function loop() {
-        if (is_streaming) {
-          if (vrDisplay) {
-            if (frameData != null) {
-              prev_time = frameData.timestamp;
-            }
-
-            vrDisplay.getFrameData(frameData);
-
-            // Populate the data 
-
-            // Orientation
-            var orientation = ","+frameData.pose.orientation[0]+","+frameData.pose.orientation[1]+","+frameData.pose.orientation[2]+","+frameData.pose.orientation[3];
-
-            // Matrix
-            var length = 16;
-            var motion_data = new Float32Array(64);
-            motion_data.set(frameData.leftViewMatrix);
-            motion_data.set(frameData.rightViewMatrix, length*1);
-            motion_data.set(frameData.leftProjectionMatrix, length*2);
-            motion_data.set(frameData.rightProjectionMatrix, length*3);
-
-            var msg = {
-              timestamp: frameData.timestamp,
-              motion_data: motion_data.buffer,
-              orientation: orientation
-            };
-
-            // send data to server using socket.io
-            socket.emit('vr_data', msg);
-
-            // Update View
-            $("#timestamp").text("Time: "+msg.timestamp+" ("+Math.round(1000/(msg.timestamp-prev_time))+" Hz)");
-            var orientation_text = "<"+frameData.pose.orientation[0]+", "+frameData.pose.orientation[1]+", "+frameData.pose.orientation[2]+", "+frameData.pose.orientation[3]+">";
-            $("#orientation").text(orientation_text);
-          }
-          setTimeout(loop, 1);
-        }
-        return;
-      }
 
       function quatToMatrix (pose) {
         var out = new Float32Array(16);
@@ -254,13 +167,6 @@ found in the LICENSE file.
       }
 
       $(document).ready(function () {
-        $('#stream').click(function () {
-          $(this).hide();
-          $('#stop').show();
-          is_streaming = true;
-          setTimeout(loop, 1);
-        });
-
         $('#load_and_stream').click(function () {
           $(this).attr("disabled", "disabled");
           var trace_file = $('input[name=optradio]:checked').val();
@@ -275,12 +181,6 @@ found in the LICENSE file.
               window.requestAnimationFrame(streamData);
             }
           });
-        });
-
-        $('#stop').click(function () {
-          $(this).hide();
-          $('#stream').show();
-          is_streaming = false;
         });
       });
 
